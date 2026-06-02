@@ -1,0 +1,20 @@
+/* Custom scrollbar for the translation boxes */
+textarea::-webkit-scrollbar, 
+#outputText::-webkit-scrollbar {
+    width: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb, 
+#outputText::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 10px;
+}
+
+/* Smooth transition for the translate button */
+#translateBtn {
+    transition: all 0.2s ease-in-out;
+}
+
+#translateBtn:active {
+    transform: scale(0.95);
+}
