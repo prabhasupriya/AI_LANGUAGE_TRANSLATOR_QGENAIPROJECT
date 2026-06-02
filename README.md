@@ -1,76 +1,98 @@
-#  AI - Advanced Language Translator Engine
+# PolyGlot AI - Advanced Language Translator Engine
 
-An AI-powered, meaning-preserving language translation system built to bridge communication gaps with high contextual intelligence. Unlike traditional rule-based translation systems,  AI utilizes Large Language Models (LLMs) to capture local idioms, cultural nuances, and original tones across multiple global and regional languages.
+An AI-powered, meaning-preserving language translation system built to bridge communication gaps with high contextual intelligence. Unlike traditional rule-based translation systems, PolyGlot AI utilizes Large Language Models (LLMs) to capture local idioms, cultural nuances, and original tones across multiple global and regional languages.
 
-This project covers the initial development stages of a comprehensive 6-Week Roadmap, showcasing robust prompt engineering and asynchronous API client execution.
+This project features an advanced **dual-framework microservices architecture**, combining the data persistence power of **Django** with the lightweight execution speed of **Flask** acting as the AI worker core.
 
 ---
 
-## 🚀 Key Features
+##  Key Features
 
-### 🌍 Context-Aware Translation
+###  Context-Aware Translation
 
-Uses cutting-edge Generative AI to preserve textual meaning, tone, formatting, and contextual intent across languages.
+Uses cutting-edge Generative AI to preserve textual meaning, tone, formatting, and contextual intent across languages instead of merely substituting words.
 
-### 🗣️ Regional & Global Language Support
+### 👥 Dual-Framework Microservices Architecture
 
-Supports multiple languages including:
+#### Django Gateway Service (Port 8000)
+
+* Handles user requests and session management.
+* Serves as the primary frontend gateway.
+* Maintains translation history records.
+* Provides database interaction and administrative control.
+
+#### Flask AI Worker Service (Port 5000)
+
+* Dedicated AI translation microservice.
+* Processes translation requests independently.
+* Communicates with Groq Cloud APIs.
+* Executes prompt engineering and response generation.
+
+###  Persistent Translation History
+
+Stores:
+
+* Original text
+* Source language
+* Target language
+* Translated output
+* Timestamps
+
+All translation records are maintained using SQLite for easy auditing and retrieval.
+
+### Multi-Language Support
+
+Supports synchronized translations between:
 
 * English
 * Telugu (తెలుగు)
 * Hindi (हिन्दी)
-* Spanish
-* French
-* German
-* Japanese
-* And more
+* Spanish (Español)
+* French (Français)
+* German (Deutsch)
+* Japanese (日本語)
+* Chinese (中文)
+* Arabic (العربية)
 
-### 🎨 Dynamic Frontend Architecture
+###  Modern User Interface
 
-High-fidelity user interface built using Tailwind CSS featuring:
+Built using Tailwind CSS and Font Awesome with:
 
-* Responsive layouts
-* Dynamic state changes
-* Character counting
-* Automatic layout scaling
-* Smooth user experience
-
-###  Asynchronous Data Handling
-
-Native JavaScript `fetch()` integration enables seamless client-server communication without page reloads.
-
-###  Utility Shortcuts
-
-Built-in productivity features include:
-
-* Copy translated text to clipboard
-* Regenerate alternative translations
-* Clear input/output instantly
+* Responsive design
+* Character count tracking (up to 5000 characters)
+* One-click language swapping
+* Clipboard copy functionality
+* Loading animations during translation
+* Smooth asynchronous communication
 
 ---
 
-##  Tech Stack
+##  Technology Stack
 
-### Frontend
+### Backend Frameworks
 
-* HTML5
-* Tailwind CSS
-* Font Awesome Icons
-* Vanilla JavaScript (ES6+)
-
-### Backend
-
-* Flask (Python 3.12)
+* Django 5.0.2
+* Flask 3.0.2
 
 ### AI Infrastructure
 
 * Groq Cloud API
-
-### Large Language Model
+* Llama 3.3 70B Versatile Model
 
 ```text
 llama-3.3-70b-versatile
 ```
+
+### Database
+
+* SQLite3
+
+### Frontend
+
+* HTML5
+* Tailwind CSS v4
+* Font Awesome
+* Vanilla JavaScript (ES6)
 
 ### Environment Management
 
@@ -78,23 +100,34 @@ llama-3.3-70b-versatile
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
-ai_language_translator/
+AI_LANGUAGE_TRANSLATOR_QGENAIPROJECT/
+│
+├── django_app/
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   │
+│   ├── translator/
+│   │   ├── migrations/
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   └── templates/
+│   │       └── translator/
+│   │           └── index.html
+│   │
+│   ├── db.sqlite3
+│   └── manage.py
 │
 ├── flask_app/
 │   ├── app.py
-│   │
-│   ├── templates/
-│   │   └── index.html
-│   │
-│   └── static/
-│       ├── css/
-│       │   └── style.css
-│       │
-│       └── js/
-│           └── main.js
+│   └── templates/
+│       └── index.html
 │
 ├── .env
 ├── .gitignore
@@ -102,24 +135,55 @@ ai_language_translator/
 └── README.md
 ```
 
-### Directory Description
+---
 
-| File/Folder            | Purpose                                           |
-| ---------------------- | ------------------------------------------------- |
-| `app.py`               | Core Flask Controller and LLM Prompt Architecture |
-| `templates/index.html` | Main responsive frontend UI                       |
-| `static/css/style.css` | Custom styling and layout enhancements            |
-| `static/js/main.js`    | Event handling and API communication              |
-| `.env`                 | Secure storage for API credentials                |
-| `.gitignore`           | Excludes sensitive and unnecessary files          |
-| `requirements.txt`     | Python dependency list                            |
-| `README.md`            | Project documentation                             |
+## System Architecture Workflow
+
+```text
+                ┌──────────────────────────┐
+                │      User Browser        │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Django Gateway Service   │
+                │       Port : 8000        │
+                └────────────┬─────────────┘
+                             │
+                  Async API Request
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Flask AI Worker Service  │
+                │       Port : 5000        │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │       Groq Cloud API     │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │  Llama-3.3-70B Model     │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ Translation Response     │
+                └────────────┬─────────────┘
+                             │
+                             ▼
+                ┌──────────────────────────┐
+                │ SQLite Translation Logs  │
+                └──────────────────────────┘
+```
 
 ---
 
 ##  Installation & Setup
 
-### 1 Clone the Repository
+###  Clone the Repository
 
 ```bash
 git clone https://github.com/prabhasupriya/AI_LANGUAGE_TRANSLATOR_QGENAIPROJECT.git
@@ -130,20 +194,18 @@ cd AI_LANGUAGE_TRANSLATOR_QGENAIPROJECT
 
 ###  Configure Environment Variables
 
-Create a `.env` file in the project root directory.
+Create a `.env` file in the root directory:
 
 ```env
 GROQ_API_KEY=your_secured_groq_api_key_here
-FLASK_SECRET_KEY=any_alphanumeric_random_string_here
+FLASK_SECRET_KEY=your_alphanumeric_random_string_here
 ```
 
-> Note: Your private credentials remain protected because the `.env` file is excluded through `.gitignore`.
+> The `.env` file is excluded through `.gitignore` and will never be pushed to GitHub.
 
 ---
 
 ###  Install Dependencies
-
-Ensure Python 3.x is installed.
 
 ```bash
 pip install -r requirements.txt
@@ -151,20 +213,35 @@ pip install -r requirements.txt
 
 ---
 
-###  Run the Application
-
-Navigate to the Flask application directory:
+###  Apply Database Migrations
 
 ```bash
-cd flask_app
-python app.py
+cd django_app
+
+python manage.py makemigrations
+
+python manage.py migrate
 ```
 
 ---
 
-### Access the Application
+##  Running the Application
 
-Open your browser and visit:
+This project uses two backend services.
+
+Open two separate terminal windows.
+
+---
+
+### Terminal 1 — Start Flask AI Worker
+
+```bash
+cd flask_app
+
+python app.py
+```
+
+Flask Service URL:
 
 ```text
 http://127.0.0.1:5000
@@ -172,81 +249,101 @@ http://127.0.0.1:5000
 
 ---
 
-##  Application Workflow
+### Terminal 2 — Start Django Gateway
+
+```bash
+cd django_app
+
+python manage.py runserver 8000
+```
+
+Django Service URL:
 
 ```text
-User Input
-     │
-     ▼
-Frontend (HTML + JS)
-     │
-     ▼
-Flask Backend
-     │
-     ▼
-Groq API
-     │
-     ▼
-LLM Translation Engine
-     │
-     ▼
-Translated Response
-     │
-     ▼
-Frontend Output Display
+http://127.0.0.1:8000
 ```
 
 ---
 
-## Security Considerations
+##  Security Considerations
 
-* API keys are stored securely in environment variables.
-* Sensitive credentials are excluded from Git tracking.
-* Backend handles all API communication securely.
-* No API keys are exposed to the client-side application.
+### Environment Variable Isolation
+
+Sensitive API keys remain outside source control using `.env` configuration files.
+
+### Zero Client-Side Exposure
+
+No API credentials are exposed in:
+
+* HTML
+* CSS
+* JavaScript
+
+All communication occurs securely through backend services.
+
+### Secure Service Separation
+
+Django and Flask operate independently, minimizing direct exposure of AI infrastructure.
 
 ---
 
 ##  Future Enhancements
 
-* Speech-to-Text Translation
-* Text-to-Speech Output
-* Translation History
-* Export Translations as PDF
+* Voice-to-Text Translation
+* Text-to-Speech Responses
+* Translation History Dashboard
+* PDF Export Support
+* User Authentication System
+* Translation Analytics
 * Dark Mode Support
-* Multi-Model AI Selection
-* Translation Quality Scoring
-* Real-Time Conversation Translation
+* Docker Containerization
+* Redis Caching Layer
+* PostgreSQL Production Deployment
+* Translation Quality Evaluation Metrics
 
 ---
 
-##  Contributing
+## 🤝 Contributing
 
-Contributions, feature suggestions, and bug reports are welcome.
+Contributions are welcome.
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to your branch
-5. Open a Pull Request
+2. Create a new feature branch
+
+```bash
+git checkout -b feature/new-feature
+```
+
+3. Commit changes
+
+```bash
+git commit -m "Added new feature"
+```
+
+4. Push to GitHub
+
+```bash
+git push origin feature/new-feature
+```
+
+5. Create a Pull Request
 
 ---
 
-##  License
+## 🧑‍💻 Author
 
-This project is intended for educational, research, and portfolio purposes.
+### Bandaru Prabha Supriya
 
----
-
-##  Author
-
-**Bandaru Prabha Supriya**
-
-* AIML Undergraduate
-* Machine Learning Enthusiast
+* Computer Science Engineering Undergraduate
+* Machine Learning & Deep Learning Enthusiast
+* Full-Stack AI Application Developer
 * Data Science Learner
-* AI Application Developer
+
 
 ---
 
-⭐ If you found this project useful, consider giving it a star on GitHub.
+##  Support
+
+If you found this project useful or learned something from its architecture, consider giving the repository a ⭐ on GitHub.
+
+Your support helps motivate future open-source AI projects and improvements.

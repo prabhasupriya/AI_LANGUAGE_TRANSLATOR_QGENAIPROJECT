@@ -15,7 +15,7 @@
                 <i class="fa-solid fa-language text-indigo-600 text-3xl"></i>
                 <h1 class="text-xl font-bold text-slate-800">PolyGlot <span class="text-indigo-600">AI</span></h1>
             </div>
-            <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">Flask Core Core Engine</span>
+            <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">Flask Core Engine</span>
         </div>
     </header>
 
@@ -122,7 +122,7 @@
                         })
                     });
 
-                    const data = await response.get_json ? await response.json() : await response.json();
+                    const data = await response.json();
                     
                     if (response.ok) {
                         outputText.textContent = data.translated_text;
@@ -137,12 +137,20 @@
                 }
             }
 
-            // Bind Event Actions
-            translateBtn.addEventListener('click', performTranslation);
-            regenerateBtn.addEventListener('click', performTranslation);
+            // Bind Event Actions with preventDefault to stop instant page flash resets
+            translateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                performTranslation();
+            });
+
+            regenerateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                performTranslation();
+            });
 
             // Copy Action Implementation
-            copyBtn.addEventListener('click', () => {
+            copyBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 if (!outputText.textContent) return;
                 navigator.clipboard.writeText(outputText.textContent).then(() => {
                     const icon = copyBtn.querySelector('i');
@@ -152,7 +160,8 @@
             });
 
             // UI Language Swapping logic
-            swapLanguages.addEventListener('click', () => {
+            swapLanguages.addEventListener('click', (e) => {
+                e.preventDefault();
                 if (sourceLang.value === 'Auto-Detect') return;
                 const temp = sourceLang.value;
                 sourceLang.value = targetLang.value;
