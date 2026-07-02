@@ -11,8 +11,11 @@ SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'django-insecure-fallback-key-12345')
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",
+]
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -72,7 +75,7 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files management configurations
-STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Fixes the primary key warning log
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
