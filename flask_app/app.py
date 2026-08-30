@@ -52,7 +52,7 @@ def translate_text():
         user_prompt = f"Translate the following text from {source_lang} to {target_lang}:\n\n{text}"
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",  
+            model="openai/gpt-oss-120b",  
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": user_prompt}
