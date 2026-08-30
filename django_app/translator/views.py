@@ -27,7 +27,7 @@ def django_translate(request):
         data = json.loads(request.body)
         
         # 1. Forward request to the running Flask microservice engine
-        flask_url = "http://127.0.0.1:5000/translate"
+        flask_url = "https://ai-language-translator-qgenaiproject-2.onrender.com"
         try:
             response = requests.post(flask_url, json=data, timeout=10)
             flask_data = response.json()
