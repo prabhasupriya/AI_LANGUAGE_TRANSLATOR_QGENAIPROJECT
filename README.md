@@ -77,10 +77,10 @@ Built using Tailwind CSS and Font Awesome with:
 ### AI Infrastructure
 
 * Groq Cloud API
-* Llama 3.3 70B Versatile Model
-
+* GPT OSS 120B
+* openai/gpt-oss-120b
 ```text
-llama-3.3-70b-versatile
+* openai/gpt-oss-120b
 ```
 
 ### Database
@@ -165,7 +165,7 @@ AI_LANGUAGE_TRANSLATOR_QGENAIPROJECT/
                              │
                              ▼
                 ┌──────────────────────────┐
-                │  Llama-3.3-70B Model     │
+                │  openai/gpt-oss-120b     │
                 └────────────┬─────────────┘
                              │
                              ▼
