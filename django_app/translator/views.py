@@ -63,15 +63,12 @@ def django_translate(request):
     if request.method != 'POST':
         return JsonResponse({
             'success': False,
-            'error': 'Invalid request method. Use POST.'
+            'error': 'Only POST requests are allowed.'
         }, status=405)
 
+    # Read user input
     try:
-
-        # Read incoming request data
-        content_type = request.content_type or ''
-
-        if 'application/json' in content_type:
+        if 'application/json' in (request.content_type or ''):
 
             if not request.body:
                 return JsonResponse({
@@ -79,123 +76,141 @@ def django_translate(request):
                     'error': 'Request body is empty.'
                 }, status=400)
 
-            try:
-                data = json.loads(
-                    request.body.decode('utf-8')
-                )
-
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid JSON request.'
-                }, status=400)
+            data = json.loads(request.body.decode('utf-8'))
 
         else:
-            # Support normal HTML form submissions
             data = request.POST.dict()
 
-        # Ensure request data is a dictionary
-        if not isinstance(data, dict):
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid request data.'
-            }, status=400)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON request.'
+        }, status=400)
 
-        # Extract user input
-        text = str(data.get('text', '')).strip()
+    if not isinstance(data, dict):
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request data.'
+        }, status=400)
 
-        source_lang = data.get(
-            'source_lang', 'Auto-Detect'
+    text = str(data.get('text', '')).strip()
+    source_lang = data.get('source_lang', 'Auto-Detect')
+    target_lang = data.get('target_lang', 'English')
+
+    # Validate input
+    if not text:
+        return JsonResponse({
+            'success': False,
+            'error': 'Please enter text to translate.'
+        }, status=400)
+
+    # Get Flask service URL
+    flask_url = os.getenv('FLASK_API_URL', '').strip()
+
+    if not flask_url:
+        logger.error('FLASK_API_URL is not configured.')
+
+        return JsonResponse({
+            'success': False,
+            'error': 'Flask service URL is not configured.'
+        }, status=500)
+
+    # Automatically add the translation endpoint
+    flask_url = flask_url.rstrip('/')
+
+    if not flask_url.endswith('/translate'):
+        flask_url += '/translate'
+
+    # Send request to Flask microservice
+    try:
+        response = requests.post(
+            flask_url,
+            json={
+                'text': text,
+                'source_lang': source_lang,
+                'target_lang': target_lang
+            },
+            headers={
+                'Accept': 'application/json'
+            },
+            timeout=(10, 60)
         )
 
-        target_lang = data.get(
-            'target_lang', 'English'
+    except requests.exceptions.Timeout:
+        logger.error('Flask translation request timed out.')
+
+        return JsonResponse({
+            'success': False,
+            'error': 'Translation service took too long. Please try again.'
+        }, status=504)
+
+    except requests.exceptions.ConnectionError:
+        logger.exception('Could not connect to Flask service.')
+
+        return JsonResponse({
+            'success': False,
+            'error': 'Unable to connect to translation service.'
+        }, status=503)
+
+    except requests.exceptions.RequestException:
+        logger.exception('Flask request failed.')
+
+        return JsonResponse({
+            'success': False,
+            'error': 'Translation service request failed.'
+        }, status=502)
+
+    # Convert Flask response to JSON
+    try:
+        flask_data = response.json()
+
+    except ValueError:
+        logger.error(
+            'Flask returned non-JSON response. '
+            'Status: %s, Content-Type: %s, Body: %s',
+            response.status_code,
+            response.headers.get('Content-Type'),
+            response.text[:500]
         )
 
-        # Validate input text
-        if not text:
-            return JsonResponse({
-                'success': False,
-                'error': 'Text to translate cannot be empty.'
-            }, status=400)
+        return JsonResponse({
+            'success': False,
+            'error': 'Flask returned an invalid response. Check Flask logs.'
+        }, status=502)
 
-        # Get Flask microservice URL from Render
-        flask_url = os.getenv('FLASK_API_URL')
+    if not isinstance(flask_data, dict):
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid data received from Flask.'
+        }, status=502)
 
-        if not flask_url:
-            logger.error('FLASK_API_URL environment variable is missing.')
+    # Check Flask response status
+    if response.status_code != 200 or not flask_data.get('success', True):
+        logger.error(
+            'Flask translation failed: status=%s, response=%s',
+            response.status_code,
+            flask_data
+        )
 
-            return JsonResponse({
-                'success': False,
-                'error': 'Flask service URL is not configured.'
-            }, status=500)
-
-        # Forward request to Flask microservice
-        try:
-
-            response = requests.post(
-                flask_url,
-                json={
-                    'text': text,
-                    'source_lang': source_lang,
-                    'target_lang': target_lang
-                },
-                timeout=30
+        return JsonResponse({
+            'success': False,
+            'error': flask_data.get(
+                'error',
+                'Translation failed. Please try again.'
             )
+        }, status=502)
 
-        except requests.exceptions.Timeout:
+    # Get translated text
+    translated_text = flask_data.get('translated_text', '')
 
-            return JsonResponse({
-                'success': False,
-                'error': 'Flask translation service timed out.'
-            }, status=504)
+    if not isinstance(translated_text, str) or not translated_text.strip():
+        return JsonResponse({
+            'success': False,
+            'error': 'No translated text received from Flask.'
+        }, status=502)
 
-        except requests.exceptions.ConnectionError:
-
-            return JsonResponse({
-                'success': False,
-                'error': 'Unable to connect to Flask microservice.'
-            }, status=503)
-
-        # Read Flask response safely
-        try:
-            flask_data = response.json()
-
-        except ValueError:
-
-            logger.error(
-                'Flask returned a non-JSON response. Status: %s',
-                response.status_code
-            )
-
-            return JsonResponse({
-                'success': False,
-                'error': 'Invalid response received from Flask service.'
-            }, status=502)
-
-        # Check Flask response status
-        if response.status_code != 200:
-
-            return JsonResponse({
-                'success': False,
-                'error': flask_data.get(
-                    'error',
-                    'Translation failed.'
-                )
-            }, status=502)
-
-        # Get translated text
-        translated_text = flask_data.get(
-            'translated_text', ''
-        )
-
-        if not translated_text:
-            return JsonResponse({
-                'success': False,
-                'error': 'Flask returned an empty translation.'
-            }, status=502)
-
-        # Save translation history in Django database
+    # Save successful translation to database
+    try:
         TranslationHistory.objects.create(
             original_text=text,
             translated_text=translated_text,
@@ -203,19 +218,18 @@ def django_translate(request):
             target_language=target_lang
         )
 
-        # Send translated result to frontend
-        return JsonResponse({
-            'success': True,
-            'translated_text': translated_text,
-            'source_lang': source_lang,
-            'target_lang': target_lang
-        })
-
     except Exception:
-
-        logger.exception('Unexpected error in django_translate.')
+        logger.exception('Could not save translation history.')
 
         return JsonResponse({
             'success': False,
-            'error': 'An internal server error occurred.'
+            'error': 'Translation succeeded, but history could not be saved.'
         }, status=500)
+
+    # Return result to frontend
+    return JsonResponse({
+        'success': True,
+        'translated_text': translated_text,
+        'source_lang': source_lang,
+        'target_lang': target_lang
+    })
