@@ -233,130 +233,154 @@
 
 
     <!-- JAVASCRIPT -->
-    <script>
+    
+<script>
+    const translateBtn = document.getElementById('translateBtn');
+    const inputText = document.getElementById('inputText');
+    const outputBox = document.getElementById('outputText');
 
-        const translateBtn = document.getElementById('translateBtn');
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
 
-        const inputText = document.getElementById('inputText');
-
-        const outputBox = document.getElementById('outputText');
-
-        const sourceLang = document.getElementById('sourceLang');
-
-        const targetLang = document.getElementById('targetLang');
-
-
-        // TRANSLATION FUNCTION
-        translateBtn.addEventListener('click', async () => {
-
-            const text = inputText.value.trim();
+    const historyTableBody = document.getElementById('historyTableBody');
 
 
-            if (!text) {
+    // Function to add a new translation to the visible history table.
+    function addHistoryRow(original, translated, source, target, timestamp) {
 
-                outputBox.textContent = "Please enter some text.";
+        // Remove the empty-history message if it exists.
+        const emptyRow = historyTableBody.querySelector('td[colspan="4"]');
 
-                return;
+        if (emptyRow) {
+            historyTableBody.innerHTML = '';
+        }
 
+        const row = document.createElement('tr');
+
+        const originalCell = document.createElement('td');
+        originalCell.className =
+            'p-3 whitespace-normal break-words min-w-[200px] max-w-md align-top';
+        originalCell.textContent = original;
+
+        const translatedCell = document.createElement('td');
+        translatedCell.className =
+            'p-3 font-medium text-emerald-700 whitespace-normal break-words min-w-[200px] max-w-md align-top';
+        translatedCell.textContent = translated;
+
+        const directionCell = document.createElement('td');
+        directionCell.className = 'p-3 align-top';
+
+        const directionLabel = document.createElement('span');
+        directionLabel.className =
+            'bg-slate-100 px-2 py-1 rounded text-slate-500';
+
+        directionLabel.textContent = source + ' ➔ ' + target;
+
+        directionCell.appendChild(directionLabel);
+
+        const timestampCell = document.createElement('td');
+        timestampCell.className =
+            'p-3 text-slate-400 whitespace-nowrap align-top';
+
+        timestampCell.textContent = timestamp;
+
+        row.appendChild(originalCell);
+        row.appendChild(translatedCell);
+        row.appendChild(directionCell);
+        row.appendChild(timestampCell);
+
+        // Add the newest translation at the top.
+        historyTableBody.prepend(row);
+    }
+
+
+    // TRANSLATION BUTTON
+    translateBtn.addEventListener('click', async () => {
+
+        const text = inputText.value.trim();
+
+        if (!text) {
+            outputBox.textContent = 'Please enter some text.';
+            return;
+        }
+
+        const selectedSource = sourceLang.value;
+        const selectedTarget = targetLang.value;
+
+        translateBtn.disabled = true;
+        translateBtn.textContent = 'Translating...';
+
+        outputBox.textContent =
+            'Processing through Django Gateway ➔ Flask AI Microservice...';
+
+        try {
+
+            const csrfToken = document.querySelector(
+                '[name=csrfmiddlewaretoken]'
+            )?.value;
+
+            const response = await fetch('/translate/', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
+                },
+
+                body: JSON.stringify({
+                    text: text,
+                    source_language: selectedSource,
+                    target_language: selectedTarget,
+                    source_lang: selectedSource,
+                    target_lang: selectedTarget
+                })
+
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Translation failed.');
             }
 
+            // Display the translated result.
+            outputBox.textContent = data.translated_text;
 
-            // Prevent multiple requests at the same time.
-            translateBtn.disabled = true;
+            // Immediately update the visible history.
+            // Django has already saved this record in the database.
+            addHistoryRow(
+                text,
+                data.translated_text,
+                selectedSource,
+                selectedTarget,
+                data.created_at || new Date().toLocaleString()
+            );
 
-            translateBtn.textContent = "Translating...";
+        } catch (error) {
 
+            outputBox.textContent = 'Translation Error: ' + error.message;
 
-            outputBox.textContent =
-                "Processing through Django Gateway ➔ Flask AI Microservice...";
+        } finally {
 
+            translateBtn.disabled = false;
+            translateBtn.textContent = 'Translate Via Frameworks';
 
-            try {
+        }
 
-                const csrfToken = document.querySelector(
-                    '#csrfForm [name=csrfmiddlewaretoken]'
-                ).value;
-
-
-                // Send request to Django.
-                const response = await fetch('/translate/', {
-
-                    method: 'POST',
-
-                    headers: {
-
-                        'Content-Type': 'application/json',
-
-                        'X-CSRFToken': csrfToken
-
-                    },
-
-                    body: JSON.stringify({
-
-                        text: text,
-
-                        // Both aliases are included for compatibility.
-                        // Keep the names your Django view actually reads.
-                        source_language: sourceLang.value,
-
-                        target_language: targetLang.value,
-
-                        source_lang: sourceLang.value,
-
-                        target_lang: targetLang.value
-
-                    })
-
-                });
+    });
 
 
-                const data = await response.json();
+    // Clear the previous output when the user starts a new input.
+    // The saved history record will remain in the table.
+    inputText.addEventListener('input', () => {
 
+        outputBox.textContent = '';
 
-                if (!response.ok || !data.success) {
+    });
 
-                    throw new Error(
-                        data.error || "Translation failed."
-                    );
+</script>
 
-                }
-
-
-                // DISPLAY COMPLETE TRANSLATION.
-                outputBox.textContent = data.translated_text;
-
-
-                // IMPORTANT:
-                // No setTimeout().
-                // No window.location.reload().
-                // Translation remains visible on the screen.
-
-
-            } catch (error) {
-
-                outputBox.textContent =
-                    "Translation Error: " + error.message;
-
-            } finally {
-
-                translateBtn.disabled = false;
-
-                translateBtn.textContent =
-                    "Translate Via Frameworks";
-
-            }
-
-        });
-
-
-        // CLEAR OUTPUT ONLY WHEN USER STARTS ENTERING NEW INPUT.
-        inputText.addEventListener('input', () => {
-
-            outputBox.textContent = "";
-
-        });
-
-    </script>
 
 </body>
 </html>
