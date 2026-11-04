@@ -1,4 +1,4 @@
-
+import os
 import requests
 import json
 
@@ -74,8 +74,14 @@ def django_translate(request):
                 'error': 'Text to translate cannot be empty.'
             }, status=400)
 
-        # Flask microservice URL
-        flask_url = "http://127.0.0.1:5000/translate"
+        # Flask microservice URL from Render environment variable
+        flask_url = os.getenv("FLASK_API_URL")
+
+        if not flask_url:
+            return JsonResponse({
+            'success': False,
+            'error': 'FLASK_API_URL environment variable is missing.'
+            }, status=500)
 
         # Forward request to Flask
         response = requests.post(
